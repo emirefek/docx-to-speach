@@ -1,0 +1,1 @@
+Need to put voice sample in voice_samples folder and update config.py
