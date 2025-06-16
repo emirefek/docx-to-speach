@@ -78,17 +78,24 @@ def ensure_nltk_punkt_downloaded(current_language_code): # current_language_code
 def create_tts_instance(model_name, device):
     """Initializes and returns the Coqui TTS object."""
     try:
-        from TTS.api import TTS as CoquiTTS # Import locally to give clearer error if TTS is missing
+        from TTS.api import TTS as CoquiTTS
         # PyTorch 2.6+ weights_only workaround for XTTS
         try:
+            # Import both required classes
             from TTS.tts.configs.xtts_config import XttsConfig
+            from TTS.tts.models.xtts import XttsAudioConfig # <--- IMPORT THIS NEW CLASS
+
             if hasattr(torch, 'serialization') and hasattr(torch.serialization, 'add_safe_globals'):
-                print("Attempting to apply PyTorch 2.6 workaround: add_safe_globals for XttsConfig")
-                torch.serialization.add_safe_globals([XttsConfig])
-        except ImportError:
-            # This might happen if TTS internal structure changed or XttsConfig is not where expected.
-            # It's a warning because the workaround might not be needed for all TTS/PyTorch versions.
-            print("WARNING: Could not import XttsConfig (TTS.tts.configs.xtts_config). Workaround may not apply.")
+                print("Attempting to apply PyTorch 2.6 workaround: add_safe_globals")
+                # Add both classes to the safe globals list
+                torch.serialization.add_safe_globals([XttsConfig, XttsAudioConfig]) # <--- ADD IT HERE
+                print("  Allowed globals: XttsConfig, XttsAudioConfig")
+            else:
+                print("torch.serialization.add_safe_globals not found, proceeding without it (may not be needed for this PyTorch version).")
+        except ImportError as e_import:
+            # This might happen if TTS internal structure changed or classes are not where expected.
+            print(f"WARNING: Could not import one or more classes for PyTorch 2.6 workaround: {e_import}.")
+            print("The workaround may not apply fully if classes are missing.")
         except Exception as e_sg:
             print(f"WARNING: Error applying add_safe_globals workaround: {e_sg}")
 
@@ -103,15 +110,19 @@ def create_tts_instance(model_name, device):
         return None
     except Exception as e:
         print(f"CRITICAL ERROR: Could not initialize Coqui TTS model: {e}")
-        # Check for common specific errors to provide more targeted advice
         if "weights_only" in str(e).lower() and "unsupported global" in str(e).lower():
             print("This may be the PyTorch 2.6+ compatibility issue. Ensure PyTorch is an appropriate version (e.g., <2.6 or one known to work with your TTS version) or TTS is updated if a fix exists.")
+            print("The script attempts to allowlist known classes, but more might be needed or there could be other incompatibilities.")
         elif "'GPT2InferenceModel' object has no attribute 'generate'" in str(e):
             print("This may be an incompatibility with the 'transformers' library version. Try downgrading 'transformers' (e.g., to 4.41.2 or 4.36.2).")
+        if device == "cuda" and "CUDA out of memory" in str(e):
+             print("CUDA out of memory. Try a smaller batch size if applicable, or a model that requires less VRAM, or a GPU with more VRAM.")
+        elif device == "cuda" and not torch.cuda.is_available():
+            print("CUDA device specified, but CUDA is not available to PyTorch. Check drivers and PyTorch CUDA installation.")
         if device == "mps" and "PYTORCH_ENABLE_MPS_FALLBACK" not in os.environ:
              print("For MPS issues (if you're using 'mps' device), try setting the environment variable: export PYTORCH_ENABLE_MPS_FALLBACK=1")
         return None
-
+    
 def extract_paragraphs_from_docx(docx_path):
     """Extracts and strips paragraphs from a .docx file."""
     try:

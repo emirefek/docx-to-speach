@@ -3,3 +3,4 @@ __pycache__
 input.docx
 output.wav
 voice_samples/
+data/

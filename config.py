@@ -2,7 +2,7 @@
 
 # --- XTTS Configuration ---
 # REQUIRED: Update this path to your actual reference speaker audio file
-SPEAKER_WAV_PATH = "voice_samples/female.mp3"
+SPEAKER_WAV_PATH = "/data/voice_samples/female.mp3"
 
 # Default language for TTS and sentence splitting (e.g., "tr", "en", "es")
 LANGUAGE = "tr"
@@ -14,14 +14,14 @@ XTTS_MODEL_NAME = "tts_models/multilingual/multi-dataset/xtts_v2"
 # For Apple Silicon (M-series Macs), "mps" can be used.
 # If MPS causes issues, "cpu" is a fallback.
 # Set PYTORCH_ENABLE_MPS_FALLBACK=1 in your environment if using "mps" and encountering errors.
-DEVICE = "cpu"
+DEVICE = "cuda"
 
 # --- Application Settings ---
 # Default input DOCX file if no CLI argument is provided
-DEFAULT_DOCX_PATH = "input.docx" # Or some other sensible default
+DEFAULT_DOCX_PATH = "/data/input.docx" # Or some other sensible default
 
 # Default output audio filename
-DEFAULT_OUTPUT_FILENAME = "output.wav"
+DEFAULT_OUTPUT_FILENAME = "/data/output.wav"
 
 # Maximum characters per single text segment sent to the TTS engine.
 # This helps manage potential truncation or quality issues with very long segments,
